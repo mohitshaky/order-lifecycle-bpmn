@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://www.flowable.org/processdef">
+
+    <process id="orderFulfillmentProcess" name="Order Fulfillment Process" isExecutable="true">
+
+        <!-- Start Event -->
+        <startEvent id="startEvent" name="Order Received">
+            <documentation>Customer order received, initiating fulfillment process</documentation>
+        </startEvent>
+
+        <!-- Sequence Flow: Start -> Validate -->
+        <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="validateOrderTask"/>
+
+        <!-- Service Task: Validate Order -->
+        <serviceTask id="validateOrderTask"
+                     name="Validate Order"
+                     flowable:class="com.mohit.om.service.delegate.ValidateOrderDelegate">
+            <documentation>Validates order data and publishes validation event to OM_VALIDATION_STATUS Kafka topic</documentation>
+        </serviceTask>
+
+        <!-- Sequence Flow: Validate -> Wait for Provisioning -->
+        <sequenceFlow id="flow2" sourceRef="validateOrderTask" targetRef="waitForProvisioningTask"/>
+
+        <!-- User Task: Wait for Provisioning -->
+        <userTask id="waitForProvisioningTask"
+                  name="Wait for Provisioning"
+                  flowable:assignee="system">
+            <documentation>Waits for provisioning completion event from OM_PROVISIONING_STATUS Kafka topic via ProvisioningEventListener</documentation>
+        </userTask>
+
+        <!-- Sequence Flow: Wait -> Update Status -->
+        <sequenceFlow id="flow3" sourceRef="waitForProvisioningTask" targetRef="updateOrderStatusTask"/>
+
+        <!-- Service Task: Update Order Status -->
+        <serviceTask id="updateOrderStatusTask"
+                     name="Update Order Status"
+                     flowable:class="com.mohit.om.service.delegate.UpdateOrderStatusDelegate">
+            <documentation>Updates order status and publishes OrderStatusEvent to OM_ORDER_STATUS Kafka topic</documentation>
+        </serviceTask>
+
+        <!-- Sequence Flow: Update Status -> Notify -->
+        <sequenceFlow id="flow4" sourceRef="updateOrderStatusTask" targetRef="notifyCustomerTask"/>
+
+        <!-- Service Task: Notify Customer -->
+        <serviceTask id="notifyCustomerTask"
+                     name="Notify Customer"
+                     flowable:class="com.mohit.om.service.delegate.NotifyCustomerDelegate">
+            <documentation>Sends customer notification event to OM_NOTIFICATION Kafka topic</documentation>
+        </serviceTask>
+
+        <!-- Sequence Flow: Notify -> End -->
+        <sequenceFlow id="flow5" sourceRef="notifyCustomerTask" targetRef="endEvent"/>
+
+        <!-- End Event -->
+        <endEvent id="endEvent" name="Order Fulfilled">
+            <documentation>Order fulfillment process completed successfully</documentation>
+        </endEvent>
+
+    </process>
+
+    <bpmndi:BPMNDiagram id="BPMNDiagram_orderFulfillmentProcess">
+        <bpmndi:BPMNPlane id="BPMNPlane_orderFulfillmentProcess" bpmnElement="orderFulfillmentProcess">
+
+            <bpmndi:BPMNShape id="BPMNShape_startEvent" bpmnElement="startEvent">
+                <omgdc:Bounds x="152" y="82" width="36" height="36"/>
+                <bpmndi:BPMNLabel>
+                    <omgdc:Bounds x="130" y="125" width="80" height="14"/>
+                </bpmndi:BPMNLabel>
+            </bpmndi:BPMNShape>
+
+            <bpmndi:BPMNShape id="BPMNShape_validateOrderTask" bpmnElement="validateOrderTask">
+                <omgdc:Bounds x="250" y="60" width="120" height="80"/>
+            </bpmndi:BPMNShape>
+
+            <bpmndi:BPMNShape id="BPMNShape_waitForProvisioningTask" bpmnElement="waitForProvisioningTask">
+                <omgdc:Bounds x="430" y="60" width="140" height="80"/>
+            </bpmndi:BPMNShape>
+
+            <bpmndi:BPMNShape id="BPMNShape_updateOrderStatusTask" bpmnElement="updateOrderStatusTask">
+                <omgdc:Bounds x="630" y="60" width="140" height="80"/>
+            </bpmndi:BPMNShape>
+
+            <bpmndi:BPMNShape id="BPMNShape_notifyCustomerTask" bpmnElement="notifyCustomerTask">
+                <omgdc:Bounds x="830" y="60" width="120" height="80"/>
+            </bpmndi:BPMNShape>
+
+            <bpmndi:BPMNShape id="BPMNShape_endEvent" bpmnElement="endEvent">
+                <omgdc:Bounds x="1012" y="82" width="36" height="36"/>
+                <bpmndi:BPMNLabel>
+                    <omgdc:Bounds x="990" y="125" width="80" height="14"/>
+                </bpmndi:BPMNLabel>
+            </bpmndi:BPMNShape>
+
+            <bpmndi:BPMNEdge id="BPMNEdge_flow1" bpmnElement="flow1">
+                <omgdi:waypoint x="188" y="100"/>
+                <omgdi:waypoint x="250" y="100"/>
+            </bpmndi:BPMNEdge>
+
+            <bpmndi:BPMNEdge id="BPMNEdge_flow2" bpmnElement="flow2">
+                <omgdi:waypoint x="370" y="100"/>
+                <omgdi:waypoint x="430" y="100"/>
+            </bpmndi:BPMNEdge>
+
+            <bpmndi:BPMNEdge id="BPMNEdge_flow3" bpmnElement="flow3">
+                <omgdi:waypoint x="570" y="100"/>
+                <omgdi:waypoint x="630" y="100"/>
+            </bpmndi:BPMNEdge>
+
+            <bpmndi:BPMNEdge id="BPMNEdge_flow4" bpmnElement="flow4">
+                <omgdi:waypoint x="770" y="100"/>
+                <omgdi:waypoint x="830" y="100"/>
+            </bpmndi:BPMNEdge>
+
+            <bpmndi:BPMNEdge id="BPMNEdge_flow5" bpmnElement="flow5">
+                <omgdi:waypoint x="950" y="100"/>
+                <omgdi:waypoint x="1012" y="100"/>
+            </bpmndi:BPMNEdge>
+
+        </bpmndi:BPMNPlane>
+    </bpmndi:BPMNDiagram>
+
+</definitions>

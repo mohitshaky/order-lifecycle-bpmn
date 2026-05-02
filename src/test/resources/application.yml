@@ -1,0 +1,18 @@
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+      - org.flowable.spring.boot.FlowableAutoConfiguration
+  security:
+    user:
+      name: admin
+      password: admin123
+
+orderStatusConcurrency: 3
+provisioningConcurrency: 3
+
+logging:
+  level:
+    com.mohit.om.service: DEBUG

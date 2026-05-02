@@ -1,0 +1,21 @@
+# Order Management Service
+
+*.class
+*.log
+*.jar
+*.war
+*.ear
+*.zip
+*.nar
+.gradle/
+build/
+out/
+target/
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.DS_Store
+Thumbs.db
+application-local.yml
